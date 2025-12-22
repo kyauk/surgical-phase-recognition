@@ -1,6 +1,9 @@
-opencv
+torch
+torchvision
+opencv-python
 numpy
 pandas
 scikit-learn
-scipy
-pytorch
+matplotlib
+seaborn
+tqdm

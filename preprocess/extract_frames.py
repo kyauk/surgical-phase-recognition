@@ -9,8 +9,8 @@ The dataloader will handle sampling every 12th frame and associating with labels
 import cv2
 import os
 
-TEMP_VIDEO_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/videos")
-TEMP_FRAMES_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/frames")
+#TEMP_VIDEO_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/videos")
+#TEMP_FRAMES_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/frames")
 VIDEO_DIR = os.path.expanduser("~/data/cholec80/videos")
 FRAMES_DIR = os.path.expanduser("~/data/cholec80/frames")
 
@@ -99,7 +99,7 @@ def extract_all_videos(video_dir, frames_dir):
 
 def main():
     # Extract frames from all videos
-    extract_all_videos(TEMP_VIDEO_DIR, TEMP_FRAMES_DIR)
+    extract_all_videos(VIDEO_DIR, FRAMES_DIR)
 
 
 if __name__ == "__main__":
