@@ -12,7 +12,7 @@ import cv2
 
 # Directory paths
 #TEMP_FRAMES_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/frames")
-FRAMES_DIR = os.path.expanduser("~/data/cholec80/frames")
+FRAMES_DIR = os.path.expanduser("~surgical-phase-recognition/data/cholec80/frames")
 
 
 class Cholec80Dataset:

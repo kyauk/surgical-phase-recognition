@@ -16,7 +16,7 @@ from validate_dataset import validate_dataset
 STRIDE = 12
 SEED = 42
 #TEMP_PHASE_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/phase_annotations")
-PHASE_DIR = os.path.expanduser("~/data/cholec80/phase_annotations")
+PHASE_DIR = os.path.expanduser("~/surgical-phase-recognition/data/cholec80/phase_annotations")
 
 def get_videos_data(path):
     """

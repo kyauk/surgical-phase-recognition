@@ -11,8 +11,8 @@ import os
 
 #TEMP_VIDEO_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/videos")
 #TEMP_FRAMES_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/frames")
-VIDEO_DIR = os.path.expanduser("~/data/cholec80/videos")
-FRAMES_DIR = os.path.expanduser("~/data/cholec80/frames")
+VIDEO_DIR = os.path.expanduser("~/surgical-phase-recognition/data/cholec80/videos")
+FRAMES_DIR = os.path.expanduser("~/surgical-phase-recognition/data/cholec80/frames")
 
 
 def extract_frames(video_path, output_dir):
