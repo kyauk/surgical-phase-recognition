@@ -93,7 +93,7 @@ def build_samples(videos, annotated_path, stride=STRIDE):
         video_path = os.path.join(annotated_path, video)
         annotations = load_annotations(video_path)
         for frame_idx, phase_label in annotations:
-            # every 12th frame is where we want to sample
+            # We must filter here because only these frames exist on disk
             if frame_idx % STRIDE == 0:
                 samples.append((video_id, frame_idx, phase_label))
     return samples

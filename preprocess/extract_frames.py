@@ -14,6 +14,7 @@ from tqdm import tqdm
 #TEMP_FRAMES_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/frames")
 VIDEO_DIR = os.path.expanduser("~/surgical-phase-recognition/data/cholec80/videos")
 FRAMES_DIR = os.path.expanduser("~/surgical-phase-recognition/data/cholec80/frames")
+STRIDE = 12
 
 
 def extract_frames(video_path, output_dir):
@@ -39,9 +40,11 @@ def extract_frames(video_path, output_dir):
             if not ret:
                 break
 
-            frame_filename = f"frame_{frame_idx:04d}.jpg"
-            frame_path = os.path.join(output_dir, frame_filename)
-            cv2.imwrite(frame_path, frame)
+            # Only save every STRIDE-th frame
+            if frame_idx % STRIDE == 0:
+                frame_filename = f"frame_{frame_idx:04d}.jpg"
+                frame_path = os.path.join(output_dir, frame_filename)
+                cv2.imwrite(frame_path, frame)
 
             frame_idx += 1
             pbar.update(1)
