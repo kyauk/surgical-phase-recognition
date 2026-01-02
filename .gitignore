@@ -30,4 +30,3 @@ env/
 
 # testing scripts
 validate_dataset.py
-train_temporal.py

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
-from encoder import ResNet50Encoder
-from temporal import LSTMModel, GRUModel 
+from .encoder import ResNet50Encoder
+from .temporal import LSTMModel, GRUModel 
 
 class SequencingModel(nn.Module):
     def __init__(self):

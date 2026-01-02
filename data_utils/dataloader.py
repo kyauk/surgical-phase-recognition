@@ -118,7 +118,7 @@ def build_samples(videos: list, annotated_path: str, stride=STRIDE,seq_len=16):
     return samples, sequences
 
 # Helper function to create train/val/test dataloaders
-def get_dataloaders(annotated_path):
+def get_dataloaders(annotated_path=TEMP_PHASE_DIR):
     """
     Helper function create train/val/test dataloaders
     Args:
