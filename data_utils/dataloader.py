@@ -15,7 +15,7 @@ from validate_dataset import validate_dataset
 
 STRIDE = 12
 SEED = 42
-#TEMP_PHASE_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/phase_annotations")
+TEMP_PHASE_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/phase_annotations")
 PHASE_DIR = os.path.expanduser("~/surgical-phase-recognition/data/cholec80/phase_annotations")
 
 def get_videos_data(path):
@@ -78,25 +78,44 @@ def load_annotations(annotated_file_path):
             annotations.append((int(frame_idx), phase_label))
     return annotations
 
-def build_samples(videos, annotated_path, stride=STRIDE):
+def build_samples(videos: list, annotated_path: str, stride=STRIDE,seq_len=16):
     """
     Build samples where any split type works
 
-    1. for each video, get its associated .txt file, and load their annotations
-    2. make tuple of associated
+    args:
+        videos (list): list of video files
+        annotated_path (str): path to annotated files
+        stride (int): stride between frames
+    returns: dictionary of string keys, values of tuple of tuples values
+        video samples = {
+                        "video_01": [(frame_idx, phase_label), ...],
+                        "video_02": [(frame_idx, phase_label), ...],
+                        ...
+                        }
     """
-    samples = []
+
+    samples = {}
     for video in videos:
-        # Robustly split by dot or dash to get "video01" from "video01-phase.txt"
+        # split by dot or dash to get "video01" from "video01-phase.txt"
         video_id = video.replace("-", ".").split(".")[0]
-        
         video_path = os.path.join(annotated_path, video)
         annotations = load_annotations(video_path)
+        frames = []
+
         for frame_idx, phase_label in annotations:
-            # We must filter here because only these frames exist on disk
             if frame_idx % STRIDE == 0:
-                samples.append((video_id, frame_idx, phase_label))
-    return samples
+                frames.append((frame_idx, phase_label))
+
+        samples[video_id] = tuple(frames)
+            
+    sequences = []
+    for video, frames in samples.items():
+        num_frames = len(frames)
+        max_start_idx = num_frames - seq_len
+        i = 0
+        for i in range(max_start_idx + 1):
+            sequences.append((video, i))
+    return samples, sequences
 
 # Helper function to create train/val/test dataloaders
 def get_dataloaders(annotated_path):
@@ -114,24 +133,33 @@ def get_dataloaders(annotated_path):
     train_videos, val_videos, test_videos = split_videos(video_files, num_videos)
 
     # build samples for each split
-    train_samples = build_samples(train_videos, annotated_path)
-    val_samples = build_samples(val_videos, annotated_path)
-    test_samples = build_samples(test_videos, annotated_path)
+    train_frames, train_sequences = build_samples(train_videos, annotated_path)
+    val_frames, val_sequences = build_samples(val_videos, annotated_path)
+    test_frames, test_sequences = build_samples(test_videos, annotated_path)
     
     # Run validation check
     validate_dataset(train_videos, val_videos, test_videos, 
-                     train_samples, val_samples, test_samples, 
+                     train_frames, val_frames, test_frames, 
                      annotated_path)
 
     # create datasets
-    train_dataset = Cholec80Dataset(train_samples, transform=None)
-    val_dataset = Cholec80Dataset(val_samples, transform=None)
-    test_dataset = Cholec80Dataset(test_samples, transform=None)
+    train_dataset = Cholec80Dataset(train_frames, train_sequences, transform=None)
+    val_dataset = Cholec80Dataset(val_frames, val_sequences, transform=None)
+    test_dataset = Cholec80Dataset(test_frames, test_sequences, transform=None)
 
     # create dataloaders
-    train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+    # create dataloaders
+    train_loader = []
+    if len(train_dataset) > 0:
+        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    
+    val_loader = []
+    if len(val_dataset) > 0:
+        val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+        
+    test_loader = []
+    if len(test_dataset) > 0:
+        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
     
     return train_loader, val_loader, test_loader
 
@@ -140,17 +168,31 @@ def get_dataloaders(annotated_path):
 
 def main():
     print("Testing dataloader...")
-    train_loader, val_loader, test_loader = get_dataloaders(PHASE_DIR)
+    train_loader, val_loader, test_loader = get_dataloaders(TEMP_PHASE_DIR)
     
     print(f"Train batches: {len(train_loader)}")
     print(f"Val batches:   {len(val_loader)}")
     print(f"Test batches:  {len(test_loader)}")
 
-    # Check one batch
-    images, labels = next(iter(train_loader))
-    print(f"\nSample batch shape: {images.shape}")
-    print(f"Sample labels shape: {labels.shape}")
-    print("Success!")
+    # Check one batch from any available loader
+    loader_to_check = None
+    if len(train_loader) > 0:
+        loader_to_check = train_loader
+        print("\nChecking Train batch:")
+    elif len(val_loader) > 0:
+        loader_to_check = val_loader
+        print("\nChecking Val batch (Train was empty):")
+    elif len(test_loader) > 0:
+        loader_to_check = test_loader
+        print("\nChecking Test batch (Train/Val were empty):")
+    
+    if loader_to_check:
+        images, labels = next(iter(loader_to_check))
+        print(f"Sample batch shape: {images.shape}")
+        print(f"Sample labels shape: {labels.shape}")
+        print("Success!")
+    else:
+        print("\nAll loaders are empty. Cannot check batch shape.")
 
 
 if __name__ == "__main__":

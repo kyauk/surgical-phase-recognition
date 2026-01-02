@@ -1,167 +1,143 @@
-# Surgical Phase Recognition (Cholec80)
+# Surgical Phase Recognition with Sequential Visual Models
 
 ## 1. Problem Statement
 
-We model **surgical phase recognition** as a problem of **latent state inference under partial observability**. At any time *t*, the true surgical phase is not directly observed; instead, we observe noisy visual evidence from laparoscopic video. The goal is to infer a **probability distribution over phases** given RGB video frames, and to maintain temporal consistency without assuming perfect observability.
+This project addresses **surgical phase recognition** in laparoscopic cholecystectomy videos.  
+Given a stream of RGB video frames, the goal is to **predict the current surgical phase at each time step**.
 
-This project focuses on **context estimation**, not action, recommendation, or evaluation of surgical performance.
+Formally, this is a **supervised, discriminative sequence modeling problem**: we map visual observations over time to a categorical phase label, without assuming access to surgeon intent, internal state, or hidden variables.
+
+The task is framed as **context estimation**, not evaluation, correction, or decision-making.
 
 ---
 
 ## 2. Why This Matters
 
-Reliable phase awareness is a foundational capability for downstream surgical systems (e.g., logging, indexing, safety monitoring, or phase-aware tooling). In high-stakes environments, models must:
+Many downstream surgical systems—visualization, logging, indexing, safety monitoring—benefit from **knowing what phase of a procedure is currently happening**.
 
-* Be **probabilistic**, not overconfident
-* Expose **uncertainty**, especially near transitions
-* Be **inspectable** via timelines and plots
+Accurate phase recognition enables:
+- phase-aware interfaces and analytics
+- temporal alignment of surgical events
+- uncertainty-aware downstream systems
 
-This project does **not** claim clinical impact. It demonstrates disciplined system design appropriate for safety-critical domains.
+This project does **not** judge surgical performance or recommend actions.  
+It strictly estimates **procedural context from visual data**.
 
 ---
 
 ## 3. Dataset
 
-**Cholec80**
+We use the **Cholec80 dataset**, a canonical benchmark for surgical phase recognition:
 
-* 80 laparoscopic cholecystectomy videos
-* Frame-level annotations for standard surgical phases
-* Canonical benchmark used across the literature
+- 80 laparoscopic cholecystectomy videos  
+- Frame-level annotations for standard surgical phases  
+- Widely used in prior literature  
 
 ### Preprocessing
-
-* Frames sampled at a fixed FPS (1–5 FPS, held constant across splits)
-* Standard train / validation / test split
-* RGB frames only
-* No new labels, no multimodal fusion
+- Videos are sampled at a fixed frame rate (1–5 FPS, consistent across splits)
+- RGB frames only (no multimodal fusion)
+- Standard train / validation / test split
+- No relabeling or dataset augmentation
 
 ---
 
 ## 4. Method
 
-### Inputs
+The model follows a **two-stage discriminative pipeline**:
 
-* RGB video frames (single frames or short temporal windows)
+### Visual Encoding
+Each video frame is passed through a **pretrained visual encoder** (CNN or Vision Transformer) to extract a compact feature representation.
 
-### Outputs
+- Encoder weights may be frozen or lightly fine-tuned
+- The classifier head is removed; only the encoder is used
 
-* Softmax probability distribution over surgical phases at time *t*
+### Temporal Modeling
+Encoded frame features are fed into a **sequential model** to capture temporal structure:
 
-### Architecture (Intentionally Simple)
+- LSTM / GRU / sliding-window temporal models
+- Outputs a phase probability distribution at each time step
+- Final predictions obtained via softmax over phases
 
-1. **Visual Encoder**
-
-   * CNN or Vision Transformer (pretrained allowed)
-   * Extracts frame-level visual features
-
-2. **Temporal Smoothing**
-
-   * Lightweight temporal model (LSTM, GRU, or sliding window smoothing)
-   * Enforces short-term temporal coherence
-
-3. **Classifier Head**
-
-   * Linear layer + softmax over phases
-
-This is **phase inference**, not detection of correctness or skill.
+This architecture models **temporal continuity** without assuming explicit state transitions or latent dynamics.
 
 ---
 
-## 5. Training & Evaluation
+## 5. Training Objective
 
-### Metrics (Required)
+The model is trained end-to-end using:
 
-* **Frame-level accuracy**
-* **Confusion matrix**
-* **Per-phase accuracy**
-* **Temporal consistency** (qualitative)
+- **Cross-entropy loss** at the frame level
+- Supervised learning with ground-truth phase labels
+- Optional temporal smoothing through the sequence model
 
-The goal is **clarity and reliability**, not metric maximization.
-
----
-
-## 6. Visualizations (Required)
-
-At minimum, the following plots are produced:
-
-1. **Timeline Plot**
-
-   * Ground truth phase vs. predicted phase over time
-
-2. **Phase Probability Over Time**
-
-   * Stacked probabilities or entropy curve
-
-These visualizations are treated as first-class outputs and matter more than architectural complexity.
+No reinforcement learning, planning, or policy optimization is used.
 
 ---
 
-## 7. Extension: Phase Uncertainty (Chosen)
+## 6. Evaluation
 
-### What Was Added
+We evaluate the model using standard, interpretable metrics:
 
-We compute the **entropy of the phase posterior** at each time step:
+### Quantitative Metrics
+- Frame-level accuracy  
+- Per-phase accuracy  
+- Confusion matrix  
 
-* High entropy → model uncertainty
-* Low entropy → confident phase assignment
+### Temporal Analysis
+- Timeline plots comparing predicted vs. ground-truth phases
+- Phase probability trajectories over time
+- Qualitative assessment of temporal consistency
 
-### Observations
-
-* Uncertainty spikes consistently near **phase transitions**
-* Confidence stabilizes during steady-state phases
-
-### Why This Is Conservative
-
-* No action is taken based on uncertainty
-* No recommendations are made
-* Uncertainty is exposed purely for **situational awareness**
-
-This framing aligns with safety-first system design.
+Evaluation emphasizes **behavior over time**, not just aggregate accuracy.
 
 ---
 
-## 8. Results
+## 7. Extension: Phase Uncertainty (Optional)
 
-Results are reported via:
+As a conservative extension, we analyze **model uncertainty** via the entropy of the predicted phase distribution.
 
-* Aggregate metrics (accuracy, confusion matrix)
-* Per-phase performance breakdown
-* Qualitative timeline + uncertainty plots
+Observations:
+- Uncertainty typically increases near phase boundaries
+- Stable phases show low-entropy predictions
 
-Discussion focuses on **failure modes**, transition ambiguity, and dataset limitations.
+This highlights where the model is **less confident**, which is valuable for safety-aware downstream systems.
 
----
-
-## 9. Limitations
-
-* Dataset bias (single procedure type)
-* Limited generalization across institutions or tools
-* Frame-based modeling misses fine-grained motion cues
-* No clinical claims or validation
+Importantly, uncertainty is **descriptive**, not prescriptive.
 
 ---
 
-## 10. Future Work
+## 8. Limitations
 
-* Longer-horizon temporal models
-* Phase-transition anticipation (predictive only)
-* Integration into larger **context-aware systems**
-* World-model or agent-based extensions as internal research tools only
+- Limited dataset size (80 videos)
+- Single surgical procedure type
+- Visual-only inputs
+- No claims of generalization beyond Cholec80
+- No clinical validation or deployment claims
 
----
-
-## 11. Project Scope & Constraints
-
-* No reinforcement learning
-* No agents acting on surgery
-* No simulation
-* No multi-dataset fusion
-* No claims of clinical utility
-
-The project is intentionally narrow, inspectable, and conservative.
+This project demonstrates **methodology**, not clinical readiness.
 
 ---
 
-## 12. Summary
+## 9. Future Work
 
-This repository demonstrates a **probabilistic surgical context-estimation system** with explicit uncertainty and clean evaluation. The focus is on disciplined modeling, transparency, and safety-aligned design — not novelty chasing.
+Possible future directions (not implemented here):
+
+- Larger-scale or multi-procedure datasets
+- Explicit phase-transition modeling
+- World-model or latent-state approaches as internal representations
+- Integration into passive surgical analytics systems
+
+These are intentionally left as future explorations.
+
+---
+
+## 10. Summary
+
+This repository presents a **clean, discriminative approach** to surgical phase recognition using:
+
+- pretrained visual encoders  
+- sequential temporal models  
+- explicit uncertainty analysis  
+- conservative evaluation  
+
+The focus is on **procedural context estimation**, not autonomy or intervention.
