@@ -7,13 +7,17 @@ path: ~/data/cholec80/phase_annotations/
 use temp phase dir when doing work localy, phase dir for cloud work
 """
 
-import os
 import random
 from torch.utils.data import DataLoader
 from dataset import Cholec80Dataset
-from validate_dataset import validate_dataset
+from torchvision import transforms
+import sys
+import os
 
-STRIDE = 12
+# Add project root to path to find constants.py
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from constants import STRIDE, SEQ_LEN
+
 SEED = 42
 TEMP_PHASE_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/phase_annotations")
 PHASE_DIR = os.path.expanduser("~/surgical-phase-recognition/data/cholec80/phase_annotations")
@@ -65,6 +69,10 @@ def load_annotations(annotated_file_path):
     """
     Load phase annotations
     want to return, for a single annotated .txt file, a list of tuples (frame_idx, phase_label).
+    Args:
+        annotated_file_path (str): path to the annotated file
+    Returns:
+        annotations (list): list of tuples (frame_idx, phase_label)
     """
     # load the annotated file
     annotations = []
@@ -78,20 +86,35 @@ def load_annotations(annotated_file_path):
             annotations.append((int(frame_idx), phase_label))
     return annotations
 
-def build_samples(videos: list, annotated_path: str, stride=STRIDE,seq_len=16):
+def get_all_unique_phases(annotated_path, video_files):
+    """
+    Scan all video files to find every unique phase label in the entire dataset.
+    Ensures consistency across splits.
+    """
+    unique_phases = set()
+    for video_file in video_files:
+        path = os.path.join(annotated_path, video_file)
+        annotations = load_annotations(path)
+        for _, phase in annotations:
+            unique_phases.add(phase)
+    
+    sorted_phases = sorted(list(unique_phases))
+    return {phase: i for i, phase in enumerate(sorted_phases)}
+
+
+
+def build_samples(videos: list, annotated_path: str, stride=STRIDE,seq_len=SEQ_LEN):
     """
     Build samples where any split type works
 
-    args:
+    Args:
         videos (list): list of video files
         annotated_path (str): path to annotated files
         stride (int): stride between frames
-    returns: dictionary of string keys, values of tuple of tuples values
-        video samples = {
-                        "video_01": [(frame_idx, phase_label), ...],
-                        "video_02": [(frame_idx, phase_label), ...],
-                        ...
-                        }
+        seq_len (int): sequence length
+    Returns:
+        samples (dict): dictionary of string keys, values of tuple of tuples values
+        sequences (list): list of tuples (video_id, start_idx) to be used for __getitem__ in Cholec80Dataset
     """
 
     samples = {}
@@ -117,8 +140,7 @@ def build_samples(videos: list, annotated_path: str, stride=STRIDE,seq_len=16):
             sequences.append((video, i))
     return samples, sequences
 
-# Helper function to create train/val/test dataloaders
-def get_dataloaders(annotated_path=TEMP_PHASE_DIR):
+def get_dataloaders(annotated_path=TEMP_PHASE_DIR, batch_size=32):
     """
     Helper function create train/val/test dataloaders
     Args:
@@ -132,6 +154,17 @@ def get_dataloaders(annotated_path=TEMP_PHASE_DIR):
     video_files, num_videos = get_videos_data(annotated_path)
     train_videos, val_videos, test_videos = split_videos(video_files, num_videos)
 
+    # 1. Create Global Phase Mapping
+    phase_mapping = get_all_unique_phases(annotated_path, video_files)
+    print(f"Global Phase Mapping: {phase_mapping}")
+
+    # 2. Define Transforms (ImageNet Normalization)
+    data_transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+                             std=[0.229, 0.224, 0.225])
+    ])
+
     # build samples for each split
     train_frames, train_sequences = build_samples(train_videos, annotated_path)
     val_frames, val_sequences = build_samples(val_videos, annotated_path)
@@ -143,57 +176,22 @@ def get_dataloaders(annotated_path=TEMP_PHASE_DIR):
                      annotated_path)
 
     # create datasets
-    train_dataset = Cholec80Dataset(train_frames, train_sequences, transform=None)
-    val_dataset = Cholec80Dataset(val_frames, val_sequences, transform=None)
-    test_dataset = Cholec80Dataset(test_frames, test_sequences, transform=None)
+    train_dataset = Cholec80Dataset(train_frames, train_sequences, transform=data_transform, phase_mapping=phase_mapping)
+    val_dataset = Cholec80Dataset(val_frames, val_sequences, transform=data_transform, phase_mapping=phase_mapping)
+    test_dataset = Cholec80Dataset(test_frames, test_sequences, transform=data_transform, phase_mapping=phase_mapping)
 
     # create dataloaders
     # create dataloaders
     train_loader = []
     if len(train_dataset) > 0:
-        train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
     
     val_loader = []
     if len(val_dataset) > 0:
-        val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
         
     test_loader = []
     if len(test_dataset) > 0:
-        test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
     
     return train_loader, val_loader, test_loader
-
-
-
-
-def main():
-    print("Testing dataloader...")
-    train_loader, val_loader, test_loader = get_dataloaders(TEMP_PHASE_DIR)
-    
-    print(f"Train batches: {len(train_loader)}")
-    print(f"Val batches:   {len(val_loader)}")
-    print(f"Test batches:  {len(test_loader)}")
-
-    # Check one batch from any available loader
-    loader_to_check = None
-    if len(train_loader) > 0:
-        loader_to_check = train_loader
-        print("\nChecking Train batch:")
-    elif len(val_loader) > 0:
-        loader_to_check = val_loader
-        print("\nChecking Val batch (Train was empty):")
-    elif len(test_loader) > 0:
-        loader_to_check = test_loader
-        print("\nChecking Test batch (Train/Val were empty):")
-    
-    if loader_to_check:
-        images, labels = next(iter(loader_to_check))
-        print(f"Sample batch shape: {images.shape}")
-        print(f"Sample labels shape: {labels.shape}")
-        print("Success!")
-    else:
-        print("\nAll loaders are empty. Cannot check batch shape.")
-
-
-if __name__ == "__main__":
-    main()

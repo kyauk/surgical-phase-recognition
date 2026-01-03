@@ -9,6 +9,11 @@ from typing import Tuple, List
 import torch
 from torch.utils.data import Dataset, DataLoader
 import cv2
+import sys
+import os
+# Add project root to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from constants import SEQ_LEN
 
 
 # Directory paths
@@ -28,7 +33,7 @@ class Cholec80Dataset(Dataset):
         labels: Tensor (seq_len,)
     """
 
-    def __init__(self, video_frames, sequences, frames_dir=TEMP_FRAMES_DIR, transform=None, seq_len=16):
+    def __init__(self, video_frames, sequences, frames_dir=TEMP_FRAMES_DIR, transform=None, seq_len=SEQ_LEN, phase_mapping=None):
         """
         Store samples, frames directory, and optional transforms.
         Build a phase_label -> int mapping.
@@ -41,7 +46,11 @@ class Cholec80Dataset(Dataset):
         self.seq_len = seq_len
         
         # phase mapping init
-        self.phase2int = self._build_phase_mapping(video_frames)
+        if phase_mapping is not None:
+            self.phase2int = phase_mapping
+        else:
+            self.phase2int = self._build_phase_mapping(video_frames)
+            
         self.int2phase = {v: k for k, v in self.phase2int.items()}
 
     def __len__(self):

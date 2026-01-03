@@ -14,7 +14,13 @@ from tqdm import tqdm
 #TEMP_FRAMES_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/frames")
 VIDEO_DIR = os.path.expanduser("~/surgical-phase-recognition/data/cholec80/videos")
 FRAMES_DIR = os.path.expanduser("~/surgical-phase-recognition/data/cholec80/frames")
-STRIDE = 12
+
+import sys
+# Add project root to path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from constants import STRIDE
+
+
 
 
 def extract_frames(video_path, output_dir):
