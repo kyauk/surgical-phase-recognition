@@ -16,11 +16,11 @@ import os
 
 # Add project root to path to find constants.py
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from constants import STRIDE, SEQ_LEN
+from constants import STRIDE, SEQ_LEN, ANNOTATIONS_DIR
 
 SEED = 42
-TEMP_PHASE_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/phase_annotations")
-PHASE_DIR = os.path.expanduser("~/surgical-phase-recognition/data/cholec80/phase_annotations")
+# TEMP_PHASE_DIR and PHASE_DIR removed in favor of single ANNOTATIONS_DIR from constants
+
 
 def get_videos_data(path):
     """
@@ -140,7 +140,7 @@ def build_samples(videos: list, annotated_path: str, stride=STRIDE,seq_len=SEQ_L
             sequences.append((video, i))
     return samples, sequences
 
-def get_dataloaders(annotated_path=TEMP_PHASE_DIR, batch_size=32):
+def get_dataloaders(annotated_path=ANNOTATIONS_DIR, batch_size=32):
     """
     Helper function create train/val/test dataloaders
     Args:

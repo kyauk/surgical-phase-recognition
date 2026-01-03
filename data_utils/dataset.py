@@ -13,12 +13,12 @@ import sys
 import os
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from constants import SEQ_LEN
+from constants import SEQ_LEN, FRAMES_DIR
 
 
 # Directory paths
-TEMP_FRAMES_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/frames")
-FRAMES_DIR = os.path.expanduser("~surgical-phase-recognition/data/cholec80/frames")
+# FRAMES_DIR is now imported from constants
+
 
 
 class Cholec80Dataset(Dataset):
@@ -33,7 +33,7 @@ class Cholec80Dataset(Dataset):
         labels: Tensor (seq_len,)
     """
 
-    def __init__(self, video_frames, sequences, frames_dir=TEMP_FRAMES_DIR, transform=None, seq_len=SEQ_LEN, phase_mapping=None):
+    def __init__(self, video_frames, sequences, frames_dir=FRAMES_DIR, transform=None, seq_len=SEQ_LEN, phase_mapping=None):
         """
         Store samples, frames directory, and optional transforms.
         Build a phase_label -> int mapping.

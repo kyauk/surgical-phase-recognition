@@ -12,13 +12,12 @@ from tqdm import tqdm
 
 #TEMP_VIDEO_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/videos")
 #TEMP_FRAMES_DIR = os.path.expanduser("~/projects/surgical-phase-recognition/data/cholec80/frames")
-VIDEO_DIR = os.path.expanduser("~/surgical-phase-recognition/data/cholec80/videos")
-FRAMES_DIR = os.path.expanduser("~/surgical-phase-recognition/data/cholec80/frames")
+# VIDEO_DIR and FRAMES_DIR now imported from constants
 
 import sys
 # Add project root to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from constants import STRIDE
+from constants import STRIDE, VIDEO_DIR, FRAMES_DIR
 
 
 
