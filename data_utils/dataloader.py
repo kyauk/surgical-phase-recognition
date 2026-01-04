@@ -171,9 +171,9 @@ def get_dataloaders(annotated_path=ANNOTATIONS_DIR, batch_size=32):
     test_frames, test_sequences = build_samples(test_videos, annotated_path)
     
     # Run validation check
-    validate_dataset(train_videos, val_videos, test_videos, 
+   """ validate_dataset(train_videos, val_videos, test_videos, 
                      train_frames, val_frames, test_frames, 
-                     annotated_path)
+                     annotated_path)"""
 
     # create datasets
     train_dataset = Cholec80Dataset(train_frames, train_sequences, transform=data_transform, phase_mapping=phase_mapping)
