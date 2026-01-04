@@ -45,6 +45,15 @@ def train():
     history_val_acc = []
 
     # Training Loop
+    model.eval()
+    with torch.no_grad():
+        for inputs, labels in train_loader:
+            print(f"Input shape: {inputs.shape}")
+            outputs = model(inputs)
+            print(f"Output shape: {outputs.shape}")
+            print(f"Labels shape: {labels.shape}")
+            break
+    exit()
     for epoch in range(EPOCHS):
         model.train()
         correct = 0
