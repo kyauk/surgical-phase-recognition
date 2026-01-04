@@ -3,9 +3,9 @@ import torch.nn as nn
 from .encoder import ResNet50Encoder
 from .temporal import LSTMModel, GRUModel 
 
-class SequencingModel(nn.Module):
+class SurgicalModel(nn.Module):
     def __init__(self):
-        super(SequencingModel, self).__init__()
+        super(SurgicalModel, self).__init__()
         self.encoder = ResNet50Encoder()
         self.temporal = LSTMModel()
         self.classifier = nn.Sequential(
