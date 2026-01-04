@@ -160,6 +160,7 @@ def get_dataloaders(annotated_path=ANNOTATIONS_DIR, batch_size=32):
 
     # 2. Define Transforms (ImageNet Normalization)
     data_transform = transforms.Compose([
+        transforms.ToPILImage(),
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], 
@@ -180,14 +181,14 @@ def get_dataloaders(annotated_path=ANNOTATIONS_DIR, batch_size=32):
     # create dataloaders
     train_loader = []
     if len(train_dataset) > 0:
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0, pin_memory=True)
     
     val_loader = []
     if len(val_dataset) > 0:
-        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
         
     test_loader = []
     if len(test_dataset) > 0:
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=0, pin_memory=True)
     
     return train_loader, val_loader, test_loader
