@@ -9,7 +9,7 @@ use temp phase dir when doing work localy, phase dir for cloud work
 
 import random
 from torch.utils.data import DataLoader
-from dataset import Cholec80Dataset
+from .dataset import Cholec80Dataset
 from torchvision import transforms
 import sys
 import os
