@@ -6,7 +6,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from data_utils.dataloader import get_dataloaders
 from models.model import SurgicalModel
 from tqdm import tqdm
-from constants import BATCH_SIZE, ANNOTATIONS_DIR, SEQ_LEN
+from constants import BATCH_SIZE
 from plot_results import plot_training_history
 import os
 import torch
@@ -45,15 +45,6 @@ def train():
     history_val_acc = []
 
     # Training Loop
-    model.eval()
-    with torch.no_grad():
-        for inputs, labels in train_loader:
-            print(f"Input shape: {inputs.shape}")
-            outputs = model(inputs)
-            print(f"Output shape: {outputs.shape}")
-            print(f"Labels shape: {labels.shape}")
-            break
-    exit()
     for epoch in range(EPOCHS):
         model.train()
         correct = 0
