@@ -13,7 +13,7 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
-EPOCHS = 100
+EPOCHS = 30
 TRAIN_WEIGHTS_PATH = "best_model.pth"
 SAVE_DIR = "checkpoints/"
 

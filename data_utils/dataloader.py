@@ -132,11 +132,12 @@ def build_samples(videos: list, annotated_path: str, stride=STRIDE,seq_len=SEQ_L
         samples[video_id] = tuple(frames)
             
     sequences = []
+    seq_stride = 8
     for video, frames in samples.items():
         num_frames = len(frames)
         max_start_idx = num_frames - seq_len
         i = 0
-        for i in range(max_start_idx + 1):
+        for i in range(max_start_idx + 1, seq_stride):
             sequences.append((video, i))
     return samples, sequences
 
@@ -181,14 +182,14 @@ def get_dataloaders(annotated_path=ANNOTATIONS_DIR, batch_size=32):
     # create dataloaders
     train_loader = []
     if len(train_dataset) > 0:
-        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=4, pin_memory=True)
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=8, pin_memory=True)
     
     val_loader = []
     if len(val_dataset) > 0:
-        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+        val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True)
         
     test_loader = []
     if len(test_dataset) > 0:
-        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=4, pin_memory=True)
+        test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=8, pin_memory=True)
     
     return train_loader, val_loader, test_loader
