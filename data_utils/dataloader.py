@@ -137,7 +137,7 @@ def build_samples(videos: list, annotated_path: str, stride=STRIDE,seq_len=SEQ_L
         num_frames = len(frames)
         max_start_idx = num_frames - seq_len
         i = 0
-        for i in range(max_start_idx + 1, seq_stride):
+        for i in range(0, max_start_idx + 1, seq_stride):
             sequences.append((video, i))
     return samples, sequences
 
