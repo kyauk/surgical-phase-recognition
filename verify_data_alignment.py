@@ -11,59 +11,67 @@ sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from data_utils.dataloader import get_dataloaders
 from constants import BATCH_SIZE, ANNOTATIONS_DIR
 
-def denormalize(tensor):
-    """Reverses the ImageNet normalization for visualization"""
-    mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
-    std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
-    return tensor * std + mean
+import random
 
-def verify_alignment():
+def verify_metadata():
     print("Initializing Dataloaders...")
-    train_loader, _, _ = get_dataloaders(batch_size=4)
-    
-    print("Fetching first batch...")
-    # Get one batch
-    images, labels = next(iter(train_loader))
-    
-    # images: (B, Seq, C, H, W)
-    # labels: (B, Seq)
-    
-    B, Seq, C, H, W = images.shape
-    
-    # Int to Phase mapping (reverse engineering or fetching from dataset if accessible)
-    # We can access via the dataset object in the loader
+    # using batch_size 1 is fine, we just need the dataset
+    train_loader, _, _ = get_dataloaders(batch_size=1)
     dataset = train_loader.dataset
-    int2phase = dataset.int2phase
     
-    print(f"Batch Shape: {images.shape}")
-    print(f"Labels Shape: {labels.shape}")
+    if len(dataset) == 0:
+        print("Dataset is empty! Check your data paths.")
+        return
+
+    # Pick a random sequence index
+    idx = random.randint(0, len(dataset) - 1)
     
-    # Visualize the first sequence in the batch
-    b_idx = 0
-    seq_images = images[b_idx] # (Seq, C, H, W)
-    seq_labels = labels[b_idx] # (Seq,)
+    # Get sequence info directly from dataset internal storage
+    video_id, start_idx = dataset.sequences[idx]
     
-    print(f"\nVisualizing Sequence {b_idx}...")
+    print(f"\n--- Verification Sample (Index {idx}) ---")
+    print(f"Video ID: {video_id}")
+    print(f"Sequence Start Index (internal): {start_idx}")
     
-    # Denormalize
-    seq_images_denorm = [denormalize(img).permute(1, 2, 0).numpy() for img in seq_images]
-    
-    # Create grid
-    plt.figure(figsize=(20, 4))
-    for i in range(min(Seq, 8)): # Show first 8 frames
-        plt.subplot(1, 8, i+1)
-        plt.imshow(np.clip(seq_images_denorm[i], 0, 1))
+    # Find the correct annotation file
+    # In dataloader, video_id was created via: video.replace("-", ".").split(".")[0]
+    # We need to find the filename that contains this video_id
+    try:
+        annotation_files = os.listdir(ANNOTATIONS_DIR)
+        target_file = None
+        for f in annotation_files:
+            if video_id in f:
+                target_file = f
+                break
+    except FileNotFoundError:
+        print(f"Error: ANNOTATIONS_DIR not found at {ANNOTATIONS_DIR}")
+        return
+            
+    if target_file:
+        full_path = os.path.join(ANNOTATIONS_DIR, target_file)
+        print(f"\nAnnotation File: {full_path}")
         
-        label_id = seq_labels[i].item()
-        label_name = int2phase[label_id]
+        print(f"\n--- Sequence Details (Length {dataset.seq_len}) ---")
+        # Get the frames in the sequence
+        first_frame = None
+        last_frame = None
         
-        plt.title(f"{label_name}\n({label_id})")
-        plt.axis('off')
+        for i in range(dataset.seq_len):
+            current_seq_idx = start_idx + i
+            # dataset.video_frames is {video_id: [(frame_idx, phase), ...]}
+            frame_idx, phase_label = dataset.video_frames[video_id][current_seq_idx]
+            
+            print(f"Step {i:02d}: Frame {frame_idx:<6} | Label: {phase_label}")
+            
+            if i == 0: first_frame = frame_idx
+            if i == dataset.seq_len - 1: last_frame = frame_idx
+            
+        print(f"\n--- Manual Verification Command ---")
+        print(f"Run this to check the original text file:")
+        print(f"grep -C 5 '^{first_frame}\\b' {full_path}")
         
-    output_path = "debug_alignment.png"
-    plt.savefig(output_path)
-    print(f"\nSaved visualization to {output_path}")
-    print("Please check this image to verify if the frame content matches the label.")
+    else:
+        print(f"Could not find annotation file for video {video_id} in {ANNOTATIONS_DIR}")
 
 if __name__ == "__main__":
-    verify_alignment()
+    verify_metadata()
