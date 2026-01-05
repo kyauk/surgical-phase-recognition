@@ -11,7 +11,7 @@ FRAME_WIDTH = 224
 
 # Model (Default info)
 NUM_CLASSES = 7
-BATCH_SIZE = 32
+BATCH_SIZE = 4
 
 import os
 
