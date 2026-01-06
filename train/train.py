@@ -16,6 +16,8 @@ import torch.optim as optim
 EPOCHS = 30
 TRAIN_WEIGHTS_PATH = "best_model.pth"
 SAVE_DIR = "checkpoints/"
+WEIGHT_DECAY = 1e-4
+
 
 def train():
     # define device
@@ -32,7 +34,7 @@ def train():
 
     # define optimizers
     criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=WEIGHT_DECAY)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
 
     os.makedirs(SAVE_DIR, exist_ok=True)
@@ -101,7 +103,7 @@ def train():
         history_val_loss.append(val_loss)
         history_val_acc.append(val_acc)
         
-        print(f"Validation Loss: {val_loss:.4f} | Accuracy: {val_acc:.2f}% @ EPOCH {epoch}")
+        print(f"Validation Loss: {val_loss:.4f} | Accuracy: {val_acc:.2f}% @ EPOCH {epoch + 1}")
 
 
         # Save Best Model

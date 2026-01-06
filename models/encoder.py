@@ -14,9 +14,14 @@ class ResNet50Encoder(nn.Module):
         # remove FC layer to get flattened embeddings
         self.model.fc = nn.Identity()
         
-        # Freeze the backbone
+        # Freeze everything first
         for param in self.model.parameters():
             param.requires_grad = False
+        
+        # Unfreeze layer4 (the last major convolutional block)
+       
+        for param in self.model.layer4.parameters():
+            param.requires_grad = True
        
 
     def forward(self, x):
