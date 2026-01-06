@@ -7,11 +7,11 @@ class SurgicalModel(nn.Module):
     def __init__(self):
         super(SurgicalModel, self).__init__()
         self.encoder = ResNet50Encoder()
-        self.temporal = LSTMModel()
+        self.temporal = LSTMModel(dropout=0.6)
         self.classifier = nn.Sequential(
             nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Dropout(0.5),
+            nn.Dropout(0.6),
             # 7 total phase classes
             nn.Linear(128,7)
         )

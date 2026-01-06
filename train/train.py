@@ -18,6 +18,9 @@ TRAIN_WEIGHTS_PATH = "best_model.pth"
 SAVE_DIR = "checkpoints/"
 WEIGHT_DECAY = 1e-4
 
+# Early Stopping Config
+PATIENCE = 7
+
 
 def train():
     # define device
@@ -32,13 +35,21 @@ def train():
     print("Model Initialized")
     model.to(device)
 
-    # define optimizers
-    criterion = nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001, weight_decay=WEIGHT_DECAY)
+    # define weighted loss (inverse frequency based on dataset support)
+    # manually chose weights based off validation imbalance
+    weights = torch.tensor([0.4, 1.5, 1.2, 0.5, 3.5, 4.5, 1.5]).to(device)
+    criterion = nn.CrossEntropyLoss(weight=weights)
+
+    # lower learning rate for stable fine-tuning of unfrozen backbone
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.0001, weight_decay=WEIGHT_DECAY)
     scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=EPOCHS)
 
     os.makedirs(SAVE_DIR, exist_ok=True)
     best_val_acc = 0.0
+    
+    # Early Stopping Tracking
+    best_val_loss = float('inf')
+    early_stop_counter = 0
     
     # History for plotting
     history_train_loss = []
@@ -112,6 +123,17 @@ def train():
             save_path = os.path.join(SAVE_DIR, TRAIN_WEIGHTS_PATH)
             torch.save(model.state_dict(), save_path)
             print(f"Saved Best Model ({best_val_acc:.2f}%) to {save_path}")
+
+        # Early Stopping Logic (based on Loss)
+        if val_loss < best_val_loss:
+            best_val_loss = val_loss
+            early_stop_counter = 0
+        else:
+            early_stop_counter += 1
+            print(f"Early Stopping Counter: {early_stop_counter}/{PATIENCE}")
+            if early_stop_counter >= PATIENCE:
+                print("Early stopping triggered due to no improvement in validation loss.")
+                break
 
 
     print("Training Complete")

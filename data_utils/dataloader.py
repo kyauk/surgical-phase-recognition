@@ -160,9 +160,25 @@ def get_dataloaders(annotated_path=ANNOTATIONS_DIR, batch_size=32):
     print(f"Global Phase Mapping: {phase_mapping}")
 
     # 2. Define Transforms (ImageNet Normalization)
-    data_transform = transforms.Compose([
+    # 2. Define Transforms
+    # Validation/Test: Standard ImageNet Normalization
+    eval_transform = transforms.Compose([
         transforms.ToPILImage(),
         transforms.Resize((224, 224)),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], 
+                             std=[0.229, 0.224, 0.225])
+    ])
+    
+    # Training: "Heavy" Augmentation to prevent overfitting
+    train_transform = transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.Resize((224, 224)),
+        # Augmentations
+        transforms.ColorJitter(brightness=0.1, contrast=0.1, saturation=0.1, hue=0.05),
+        transforms.RandomRotation(10),
+        transforms.GaussianBlur(kernel_size=5, sigma=(0.1, 2.0)),
+        # Standard
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.485, 0.456, 0.406], 
                              std=[0.229, 0.224, 0.225])
@@ -174,9 +190,10 @@ def get_dataloaders(annotated_path=ANNOTATIONS_DIR, batch_size=32):
     test_frames, test_sequences = build_samples(test_videos, annotated_path)
 
     # create datasets
-    train_dataset = Cholec80Dataset(train_frames, train_sequences, transform=data_transform, phase_mapping=phase_mapping)
-    val_dataset = Cholec80Dataset(val_frames, val_sequences, transform=data_transform, phase_mapping=phase_mapping)
-    test_dataset = Cholec80Dataset(test_frames, test_sequences, transform=data_transform, phase_mapping=phase_mapping)
+    # create datasets
+    train_dataset = Cholec80Dataset(train_frames, train_sequences, transform=train_transform, phase_mapping=phase_mapping)
+    val_dataset = Cholec80Dataset(val_frames, val_sequences, transform=eval_transform, phase_mapping=phase_mapping)
+    test_dataset = Cholec80Dataset(test_frames, test_sequences, transform=eval_transform, phase_mapping=phase_mapping)
 
     # create dataloaders
     # create dataloaders
