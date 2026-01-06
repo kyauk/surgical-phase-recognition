@@ -7,7 +7,7 @@ class SurgicalModel(nn.Module):
     def __init__(self):
         super(SurgicalModel, self).__init__()
         self.encoder = ResNet50Encoder()
-        self.temporal = LSTMModel(dropout=0.6)
+        self.temporal = GRUModelodel(dropout=0.6)
         self.classifier = nn.Sequential(
             nn.Linear(256, 128),
             nn.ReLU(),
