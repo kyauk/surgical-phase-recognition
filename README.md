@@ -90,23 +90,8 @@ We evaluate the model using standard, interpretable metrics:
 
 Evaluation emphasizes **behavior over time**, not just aggregate accuracy.
 
----
 
-## 7. Extension: Phase Uncertainty (Optional)
-
-As a conservative extension, we analyze **model uncertainty** via the entropy of the predicted phase distribution.
-
-Observations:
-- Uncertainty typically increases near phase boundaries
-- Stable phases show low-entropy predictions
-
-This highlights where the model is **less confident**, which is valuable for safety-aware downstream systems.
-
-Importantly, uncertainty is **descriptive**, not prescriptive.
-
----
-
-## 8. Limitations
+## 7. Limitations
 
 - Limited dataset size (80 videos)
 - Single surgical procedure type
@@ -118,20 +103,7 @@ This project demonstrates **methodology**, not clinical readiness.
 
 ---
 
-## 9. Future Work
-
-Possible future directions (not implemented here):
-
-- Larger-scale or multi-procedure datasets
-- Explicit phase-transition modeling
-- World-model or latent-state approaches as internal representations
-- Integration into passive surgical analytics systems
-
-These are intentionally left as future explorations.
-
----
-
-## 10. Summary
+## 8. Summary
 
 This repository presents a **clean, discriminative approach** to surgical phase recognition using:
 
